@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <string name="app_name">Collect</string>
+    <string name="action_settings">Settings</string>
+    <string name="stop_collection">Stop</string>
+    <string name="send_collection">Send Data</string>
+    <string name="collectData">Collect Data</string>
+    <string name="close">Close</string>
+
+</resources>
