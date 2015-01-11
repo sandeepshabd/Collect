@@ -11,7 +11,9 @@ import android.util.Log;
 
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.util.Calendar;
 import java.util.Date;
+import java.util.GregorianCalendar;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -25,6 +27,10 @@ public class CollectionService extends Service {
     private static final String TAG="CollectionService";
     Timer timer = new Timer();
     StringBuilder resultMaker = new StringBuilder();
+    boolean collectionStarted = false;
+    Calendar mainCalendar = new GregorianCalendar();
+    TimerTask doAsynchronousTask;
+    TimerTask sendDataTask;
 
 
     public CollectionService() {
@@ -42,24 +48,71 @@ public class CollectionService extends Service {
         mSensorManager.registerListener(sensorListener, magnetometer, SensorManager.SENSOR_DELAY_UI);
 
         final CollectionTask collectionTask = new CollectionTask();
-        TimerTask doAsynchronousTask = new TimerTask() {
+        doAsynchronousTask = new TimerTask() {
             public void run() {
                 collectionTask.execute();
                 resultMaker.append("{");
                 resultMaker.append(DataClass.singleRunResult);
                 resultMaker.append("},");
 
+                int hour = mainCalendar.get( Calendar.HOUR_OF_DAY );
+                if(hour>18){
+                    sendDataTask.cancel();
+                    sendTask();
+                    doAsynchronousTask.cancel();
+                }
             }
         };
-        TimerTask sendDataTask = new TimerTask() {
+
+        sendDataTask = new TimerTask() {
             public void run() {
-                String result = "["+resultMaker.toString()+"{"+DataClass.singleRunResult+"}]";
-                Log.i(TAG,"result:"+result);
-                resultMaker=  new StringBuilder();
-
+                sendTask();
             }
         };
 
+
+        String am_pm;
+        int hour = mainCalendar.get( Calendar.HOUR_OF_DAY );
+
+        //process to start only between 8 AM and 6 PM
+        if(hour>8 && hour <18){
+            collectionStarted = true;
+            startCollectingSendingData(doAsynchronousTask,sendDataTask);
+        }else{
+            scheduleDailyRun(doAsynchronousTask,sendDataTask);
+        }
+    }
+
+    private void scheduleDailyRun(TimerTask doAsynchronousTask,TimerTask sendDataTask){
+        Timer timer = new Timer();
+        Calendar date = Calendar.getInstance();
+        date.set(
+                Calendar.DAY_OF_WEEK,
+                Calendar.SUNDAY
+        );
+        date.set(Calendar.HOUR, 8);
+        date.set(Calendar.MINUTE, 0);
+        date.set(Calendar.SECOND, 0);
+        date.set(Calendar.MILLISECOND, 0);
+        timer.schedule(
+                doAsynchronousTask,
+                date.getTime(),
+                1000 * 60 * 60 * 24 * 7
+        );
+        timer.schedule(
+                sendDataTask,
+                date.getTime(),
+                1000 * 60 * 60 * 24 * 7
+        );
+    }
+
+    private void sendTask(){
+        String result = "["+resultMaker.toString()+"{"+DataClass.singleRunResult+"}]";
+        Log.i(TAG,"result:"+result);
+        resultMaker=  new StringBuilder();
+    }
+
+    private void startCollectingSendingData(TimerTask doAsynchronousTask,TimerTask sendDataTask){
         timer.schedule(doAsynchronousTask, 0, 3000);
         timer.schedule(sendDataTask, 0, 3000*20*1);
     }
