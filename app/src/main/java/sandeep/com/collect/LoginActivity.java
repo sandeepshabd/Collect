@@ -7,6 +7,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.telephony.TelephonyManager;
+import android.util.Log;
 import android.util.Patterns;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -20,14 +21,18 @@ import java.util.regex.Pattern;
 
 public class LoginActivity extends Activity {
     Context context;
+    TextView emailAddr;
+    TextView phoneNumber;
+    private static final String TAG="LoginActivity";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        Log.i(TAG, "onCreate");
         setContentView(R.layout.activity_login);
         RelativeLayout loginLayout = (RelativeLayout)findViewById(R.id.activity_login);
-        TextView emailAddr = (TextView) loginLayout.findViewById(R.id.email);
-        TextView phoneNumber = (TextView) loginLayout.findViewById(R.id.phone);
+        emailAddr = (TextView) loginLayout.findViewById(R.id.email);
+        phoneNumber = (TextView) loginLayout.findViewById(R.id.phone);
         emailAddr.setText(getEmailAddress());
         phoneNumber.setText(getPhoneNumber());
         context= this;
@@ -37,9 +42,16 @@ public class LoginActivity extends Activity {
             @Override
             public void onClick(View v) {
                 Intent intent = new Intent(context, MainActivity.class);
-                intent.putExtra("EMAIL", getEmailAddress());
-                intent.putExtra("PHONE", getPhoneNumber());
-                startActivity(intent);
+                UserProfile.emailAddress=emailAddr.getText().toString();
+                UserProfile.phoneNumber= phoneNumber.getText().toString();
+               // intent.putExtra("EMAIL", getEmailAddress());
+               // intent.putExtra("PHONE", getPhoneNumber());
+                if(android.util.Patterns.EMAIL_ADDRESS.matcher(UserProfile.emailAddress).matches())
+                if(Patterns.EMAIL_ADDRESS.matcher(UserProfile.emailAddress).matches()
+                        && Patterns.PHONE.matcher(UserProfile.phoneNumber).matches()){
+                    startActivity(intent);
+                }
+
             }
         });
 

@@ -21,7 +21,7 @@ public class SensorData  implements SensorEventListener {
         if (event.sensor.getType() == Sensor.TYPE_ACCELEROMETER){
             gravityFlag= true;
             mGravity = event.values;
-            DataClass.accelerometerData ="{x:"+mGravity[0]+" y:"+mGravity[1]+" z:"+mGravity[2]+"}";
+            DataClass.accelerometerData ="{\"x\":"+mGravity[0]+", \"y\":"+mGravity[1]+", \"z\":"+mGravity[2]+"}";
         }
         if (event.sensor.getType() == Sensor.TYPE_MAGNETIC_FIELD){
             magneticFlag= true;
@@ -36,7 +36,7 @@ public class SensorData  implements SensorEventListener {
                 if (success) {
                     float orientation[] = new float[3];
                     SensorManager.getOrientation(R, orientation);
-                    DataClass.orientationData = orientation[0]+""; // orientation contains: azimut, pitch and roll
+                    DataClass.orientationData = "{\"azimut\":"+orientation[0]+",\"pitch\":"+orientation[1]+",\"roll\":"+orientation[2]+"}"; // orientation contains: azimut, pitch and roll
                 }
             }catch (Exception e){
 

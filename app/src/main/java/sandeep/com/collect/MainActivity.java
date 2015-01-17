@@ -15,6 +15,7 @@ public class MainActivity extends Activity {
     private static final String TAG="MainActivity";
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        Log.i(TAG,"onCreate");
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         Log.i(TAG,"start service");
