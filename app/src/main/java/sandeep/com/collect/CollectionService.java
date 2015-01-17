@@ -115,8 +115,14 @@ public class CollectionService extends Service {
                         "\",\"email\":\""+UserProfile.emailAddress+
                         "\",\"data\":["+resultMaker.toString()+
                         "{"+DataClass.singleRunResult+"}]}";
-        Log.i(TAG,"result:"+result);
         resultMaker=  new StringBuilder();
+        Log.i(TAG,"result:"+result);
+        try{
+            RestClient.get().postCollectionData(result);
+        }catch(Exception ex){
+            Log.e(TAG,ex.getMessage());
+        }
+
     }
 
     private void startCollectingSendingData(TimerTask doAsynchronousTask,TimerTask sendDataTask){

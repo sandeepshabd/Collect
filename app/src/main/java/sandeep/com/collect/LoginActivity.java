@@ -15,6 +15,7 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import java.util.regex.Pattern;
 
@@ -44,14 +45,13 @@ public class LoginActivity extends Activity {
                 Intent intent = new Intent(context, MainActivity.class);
                 UserProfile.emailAddress=emailAddr.getText().toString();
                 UserProfile.phoneNumber= phoneNumber.getText().toString();
-               // intent.putExtra("EMAIL", getEmailAddress());
-               // intent.putExtra("PHONE", getPhoneNumber());
                 if(android.util.Patterns.EMAIL_ADDRESS.matcher(UserProfile.emailAddress).matches())
                 if(Patterns.EMAIL_ADDRESS.matcher(UserProfile.emailAddress).matches()
                         && Patterns.PHONE.matcher(UserProfile.phoneNumber).matches()){
                     startActivity(intent);
+                }else{
+                    Toast.makeText(null, "Please use a valid email and phone.", Toast.LENGTH_SHORT).show();
                 }
-
             }
         });
 
