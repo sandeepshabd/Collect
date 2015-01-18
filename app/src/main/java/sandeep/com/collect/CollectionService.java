@@ -130,9 +130,11 @@ public class CollectionService extends Service {
         resultMaker=  new StringBuilder();
         Log.i(TAG,"result:"+result);
         try{
+           // RestClient.get().postCollectionData(result,new BackendResponse());
             RestClient.get().postCollectionData(result);
         }catch(Exception ex){
-            Log.e(TAG,ex.getMessage());
+           // Log.e(TAG,ex.getMessage());
+            ex.printStackTrace();
         }
 
     }

@@ -5,6 +5,7 @@ import com.squareup.okhttp.OkHttpClient;
 import java.util.concurrent.TimeUnit;
 
 import retrofit.RestAdapter;
+import retrofit.android.AndroidLog;
 import retrofit.client.OkClient;
 
 /**
@@ -13,7 +14,7 @@ import retrofit.client.OkClient;
 public class RestClient {
 
     private static IApi REST_CLIENT;
-    private final static String ROOT =   "http://sandeepshabd/data/2.5";
+    private final static String ROOT =   "http://ec2-54-68-110-101.us-west-2.compute.amazonaws.com:32123";
     private final static long timeoutSeconds = 10;
 
     static {
@@ -42,7 +43,7 @@ public class RestClient {
                 .setEndpoint(ROOT)
                 .setClient(okClient)
                 .setErrorHandler(httpErrorHandler)
-                .setLogLevel(RestAdapter.LogLevel.FULL)
+                .setLogLevel(RestAdapter.LogLevel.FULL).setLog(new AndroidLog("FLUME_CALL_LOG"))
                 .build();
 
         REST_CLIENT = restAdapter.create(IApi.class);

@@ -10,7 +10,7 @@ import retrofit.RetrofitError;
  */
 public class HttpErrorHandler implements ErrorHandler {
 
-    private final String TAG = "TimeoutErrorHandler";
+    private final String TAG = "HttpErrorHandler";
 
     @Override
     public Throwable handleError(RetrofitError failureReason) {
