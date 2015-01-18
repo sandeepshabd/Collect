@@ -9,6 +9,9 @@ import android.os.AsyncTask;
 import android.os.IBinder;
 import android.util.Log;
 
+import org.json.JSONArray;
+import org.json.JSONObject;
+
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
@@ -131,7 +134,8 @@ public class CollectionService extends Service {
         Log.i(TAG,"result:"+result);
         try{
            // RestClient.get().postCollectionData(result,new BackendResponse());
-            RestClient.get().postCollectionData(result);
+            JSONArray jsnobject = new JSONArray(result);
+            RestClient.get().postCollectionData(jsnobject);
         }catch(Exception ex){
            // Log.e(TAG,ex.getMessage());
             ex.printStackTrace();
@@ -168,7 +172,7 @@ public class CollectionService extends Service {
 
     private class CollectionTask {
 
-        DateFormat timeFormat = new SimpleDateFormat("HH:mm:ss:SSSZ");
+        DateFormat timeFormat = new SimpleDateFormat("yyyyy-mm-dd HH:mm:ss:SSSZ");
         //get current date time with Date()
 
 
