@@ -85,13 +85,26 @@ public class LoginActivity extends Activity {
     }
 
     private String getPhoneNumber(){
-        TelephonyManager tMgr =(TelephonyManager)this.getSystemService(Context.TELEPHONY_SERVICE);
-        return tMgr.getLine1Number();
+
+        String phone ="";
+        try {
+            TelephonyManager tMgr = (TelephonyManager) this.getSystemService(Context.TELEPHONY_SERVICE);
+            phone = tMgr.getLine1Number();
+        }catch(Exception e){
+            Log.e(TAG,"Phone number not found:"+e.getMessage());
+        }
+        return phone;
     }
 
     private String getEmailAddress(){
-        Pattern emailPattern = Patterns.EMAIL_ADDRESS;
-        Account[] accounts = AccountManager.get(this).getAccounts();
-        return accounts[0].name;
+        String email="";
+        try{
+            Account[] accounts = AccountManager.get(this).getAccounts();
+            email=accounts[0].name;
+        }catch(Exception e){
+            Log.e(TAG,"Email not found:"+e.getMessage());
+        }
+
+        return email;
     }
 }
