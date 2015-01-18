@@ -19,23 +19,28 @@ import java.util.TimerTask;
 
 public class CollectionService extends Service {
 
+    private static final String TAG="CollectionService";
+
+    boolean collectionStarted = false;
+    long COLLECTION_TIME_MS = 10000; // 10 seconds
+    long SEND_TIME_MS = 60000; // 1 minute
+    int START_MORNING_HOUR= 8; //8 AM
+    int END_EVENING_HOUR= 18; // 6 PM
     private SensorManager mSensorManager;
     Sensor accelerometer;
     Sensor magnetometer;
-
     Context context =this;
-    private static final String TAG="CollectionService";
-    Timer timer = new Timer();
+    Timer scheduleTimer ;
+    Timer dailyRunTimer ;
     StringBuilder resultMaker = new StringBuilder();
-    boolean collectionStarted = false;
     Calendar mainCalendar = new GregorianCalendar();
     TimerTask doAsynchronousTask;
     TimerTask sendDataTask;
+    TimerTask scheduleDataTask;
 
 
-    public CollectionService() {
 
-    }
+    public CollectionService() {}
 
     @Override
     public void onCreate() {
@@ -47,7 +52,10 @@ public class CollectionService extends Service {
         mSensorManager.registerListener(sensorListener, accelerometer, SensorManager.SENSOR_DELAY_UI);
         mSensorManager.registerListener(sensorListener, magnetometer, SensorManager.SENSOR_DELAY_UI);
 
+        //Async task to gather data
         final CollectionTask collectionTask = new CollectionTask();
+
+        //data collection task
         doAsynchronousTask = new TimerTask() {
             public void run() {
                 collectionTask.execute();
@@ -56,54 +64,59 @@ public class CollectionService extends Service {
                 resultMaker.append("},");
 
                 int hour = mainCalendar.get( Calendar.HOUR_OF_DAY );
-                if(hour>17){
+                if(hour>END_EVENING_HOUR){
                     sendDataTask.cancel();
                     sendTask();
                     doAsynchronousTask.cancel();
+                    scheduleTimer.cancel();
+                    scheduleTimer.purge();
+                    scheduleTimer=null;
                 }
             }
         };
 
+
+        //data send task
         sendDataTask = new TimerTask() {
             public void run() {
                 sendTask();
             }
         };
 
+        //daily run task
+        scheduleDataTask = new TimerTask() {
+            public void run() {
+                Timer newTime =  new Timer();
+                startCollectingSendingData(newTime);
+            }
+        };
 
-        String am_pm;
+
         int hour = mainCalendar.get( Calendar.HOUR_OF_DAY );
         Log.i(TAG,"hour of day:"+hour);
         //process to start only between 8 AM and 6 PM
-        if(hour >= 8 && hour <18){
+        scheduleDailyRun();
+        if(hour >= START_MORNING_HOUR && hour <END_EVENING_HOUR){
             Log.i(TAG,"start collection");
             collectionStarted = true;
-            startCollectingSendingData(doAsynchronousTask,sendDataTask);
-        }else{
-            Log.i(TAG,"schedule run");
-            scheduleDailyRun(doAsynchronousTask,sendDataTask);
+            Timer newTime =  new Timer();
+            startCollectingSendingData(newTime);
         }
     }
 
-    private void scheduleDailyRun(TimerTask doAsynchronousTask,TimerTask sendDataTask){
+    private void scheduleDailyRun(){
         Log.i(TAG,"scheduleDailyRun");
-        Timer timer = new Timer();
+        dailyRunTimer = new Timer();
         Calendar date = Calendar.getInstance();
         date.set(
                 Calendar.DAY_OF_WEEK,
                 Calendar.SUNDAY
         );
-        date.set(Calendar.HOUR, 8);
+        date.set(Calendar.HOUR, START_MORNING_HOUR);
         date.set(Calendar.MINUTE, 0);
         date.set(Calendar.SECOND, 0);
         date.set(Calendar.MILLISECOND, 0);
-        timer.schedule(
-                doAsynchronousTask,
-                date.getTime(),
-                1000 * 60 * 60 * 24 * 7
-        );
-        timer.schedule(
-                sendDataTask,
+        dailyRunTimer.schedule(scheduleDataTask,
                 date.getTime(),
                 1000 * 60 * 60 * 24 * 7
         );
@@ -111,10 +124,9 @@ public class CollectionService extends Service {
 
     private void sendTask(){
         Log.i(TAG,"sendTask");
-        String result = "{\"phone\":\""+UserProfile.phoneNumber+
-                        "\",\"email\":\""+UserProfile.emailAddress+
-                        "\",\"data\":["+resultMaker.toString()+
-                        "{"+DataClass.singleRunResult+"}]}";
+        String result = "["+resultMaker.toString()+
+                        "{"+DataClass.singleRunResult+"}]";
+        DataClass.singleRunResult="";
         resultMaker=  new StringBuilder();
         Log.i(TAG,"result:"+result);
         try{
@@ -125,16 +137,25 @@ public class CollectionService extends Service {
 
     }
 
-    private void startCollectingSendingData(TimerTask doAsynchronousTask,TimerTask sendDataTask){
+    private void startCollectingSendingData(Timer timeToRun){
         Log.i(TAG,"startCollectingSendingData");
-        timer.schedule(doAsynchronousTask, 0, 3000);
-        timer.schedule(sendDataTask, 0, 3000*20*1);
+        scheduleTimer= timeToRun;
+        scheduleTimer.schedule(doAsynchronousTask, 0, COLLECTION_TIME_MS);
+        scheduleTimer.schedule(sendDataTask, 0, SEND_TIME_MS);
     }
 
     @Override
     public void onDestroy() {
         Log.i(TAG,"destroying the timer.");
-        timer.cancel();
+        try{
+            scheduleTimer.cancel();
+            scheduleTimer.purge();
+            dailyRunTimer.cancel();
+            dailyRunTimer.purge();
+        }catch(Exception e){
+
+        }
+
     }
 
     @Override
@@ -145,25 +166,33 @@ public class CollectionService extends Service {
 
     private class CollectionTask {
 
-        DateFormat timeFormat = new SimpleDateFormat("HH:mm:ss:SSS");
+        DateFormat timeFormat = new SimpleDateFormat("HH:mm:ss:SSSZ");
         //get current date time with Date()
-        Date time = new Date();
+
 
 
          protected void execute(){
              Log.i(TAG,"start execute collection service");
+             Date time = new Date();
              GPSGatherData.getLocationData(context);
              StringBuilder collectBuilder = new StringBuilder();
-             DataClass.singleRunResult=collectBuilder.append(" \"time\":")
+             DataClass.singleRunResult=collectBuilder
+             .append("\"deviceId\":\"")
+             .append(UserProfile.phoneNumber)
+             .append("\",")
+             .append(" \"emailId\":\"")
+             .append(UserProfile.emailAddress)
+             .append("\",")
+             .append(" \"time\":")
              .append("\"")
              .append(timeFormat.format(time))
              .append("\"")
-             .append(", \"gps\":")
+             .append(",")
              .append(DataClass.gps)
-             .append(", \"acc\":")
+             .append(",")
              .append(DataClass.accelerometerData)
-             .append(", \"orient\":")
-             .append(DataClass.orientationData).toString() ;
+             .append(",")
+             .append(DataClass.orientationData).toString();
          }
     }
 

@@ -5,9 +5,9 @@ package sandeep.com.collect;
  */
 public class DataClass {
 
-    public static String gps="{\"LN\":\"0\",\"LT\":\"0\",\"H:\"0\",\"S\":\"0\",B:\"0\"}";
-    public static String accelerometerData="{\"x\":0.0, \"y\":0.0, \"z\":0.0}";
-    public static String orientationData="{\"azimut\":0.0,\"pitch\":0.0,\"roll\":0.0}";
+    public static String gps="\"gps_latitude\":\"0\",\"gps_longitude\":\"0\",\"gps_altitude:\"0\",\"gps_speed\":\"0\",gps_bearing:\"0\"";
+    public static String accelerometerData="\"accelerometer_x\":0.0, \"accelerometer_y\":0.0, \"accelerometer_z\":0.0";
+    public static String orientationData="\"orientation_azimut\":0.0,\"orientation_pitch\":0.0,\"orientation_roll\":0.0";
     public static String singleRunResult="[]";
 
 }

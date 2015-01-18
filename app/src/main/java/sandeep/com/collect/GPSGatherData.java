@@ -17,8 +17,8 @@ public class GPSGatherData  {
         String locationProvider = LocationManager.NETWORK_PROVIDER;
         Location lastKnownLocation = locationManager.getLastKnownLocation(locationProvider);
         if(lastKnownLocation!=null){
-            DataClass.gps="{\"LN\":\""+lastKnownLocation.getLongitude()+"\",\"LT\":\""+lastKnownLocation.getLatitude()+"\",\"H\":\""+lastKnownLocation.getAltitude()+
-                    "\",\"S\":\""+lastKnownLocation.getSpeed()+"\",\"B\":\""+lastKnownLocation.getBearing()+"\"}";
+            DataClass.gps="\"gps_latitude\":\""+lastKnownLocation.getLongitude()+"\",\"gps_longitude\":\""+lastKnownLocation.getLatitude()+"\",\"gps_altitude\":\""+lastKnownLocation.getAltitude()+
+                    "\",\"gps_speed\":\""+lastKnownLocation.getSpeed()+"\",\"gps_bearing\":\""+lastKnownLocation.getBearing()+"\"";
         }
 
 
