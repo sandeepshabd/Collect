@@ -1,5 +1,6 @@
 package sandeep.com.collect;
 
+import android.app.IntentService;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
@@ -7,6 +8,8 @@ import android.hardware.Sensor;
 import android.hardware.SensorManager;
 import android.os.IBinder;
 import android.util.Log;
+import android.widget.Toast;
+
 
 import org.json.JSONArray;
 
@@ -18,61 +21,53 @@ import java.util.GregorianCalendar;
 import java.util.Timer;
 import java.util.TimerTask;
 
-public class CollectionService extends Service {
+public class CollectionService extends IntentService {
 
     private static final String TAG="CollectionService";
 
     boolean collectionStarted = false;
 
-    long COLLECTION_TIME_MS = 10000; // 10 seconds
-    long SEND_TIME_MS = 60000; // 1 minute
+    long COLLECTION_TIME_MS = CollectionConstant.COLLECTION_TIME_MS; // 10 seconds
+    long SEND_TIME_MS = CollectionConstant.SEND_TIME_MS; // 1 minute
 
-    int START_MORNING_HOUR= 8; //8 AM
-    int START_MORNING_MINUTE= 0; //8 AM
-    int START_MORNING_SECONDS= 0; //8 AM
-    int START_MORNING_MILLIS= 0; //8 AM
+    int START_MORNING_HOUR= CollectionConstant.START_MORNING_HOUR; //8 AM
+    int START_MORNING_MINUTE= CollectionConstant.START_MORNING_MINUTE; //8 AM
 
-    int END_EVENING_HOUR= 18; // 6 PM
-    int END_EVENING_MINUTE= 0;
+
+    int END_EVENING_HOUR= CollectionConstant.END_EVENING_HOUR; // 6 PM
+    int END_EVENING_MINUTE= CollectionConstant.END_EVENING_MINUTE;
     //int TEST_TIME= 18;
 
-    long SCHEDULEDING_TIME_IN_MS = 1000 * 60 * 60 * 24 * 7;
-    //long SCHEDULEDING_TIME_IN_MS = 1000*60*4;
 
     private SensorManager mSensorManager;
     Sensor accelerometer;
     Sensor magnetometer;
     Context context =this;
     Timer scheduleTimer = new Timer();
-    Timer dailyRunTimer ;
+
     StringBuilder resultMaker = new StringBuilder();
     Calendar mainCalendar = new GregorianCalendar();
-    TimerTask scheduleDataTask;
+
     SendTask sendDataTask ;
     CollectionAsyncTask collectionAsyncTask;
     final CollectionTask collectionTask = new CollectionTask();
 
-    public CollectionService() {}
+
+
+    public CollectionService(){
+        super("CollectionService");
+    }
+
 
     @Override
-    public void onCreate() {
-        Log.i(TAG,"create");
+    public int onStartCommand(Intent intent, int flags, int startId) {
+        Toast.makeText(this, "service starting", Toast.LENGTH_SHORT).show();
         mSensorManager = (SensorManager)getSystemService(SENSOR_SERVICE);
         accelerometer = mSensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
         magnetometer = mSensorManager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD);
         SensorData sensorListener = new SensorData();
         mSensorManager.registerListener(sensorListener, accelerometer, SensorManager.SENSOR_DELAY_UI);
         mSensorManager.registerListener(sensorListener, magnetometer, SensorManager.SENSOR_DELAY_UI);
-
-        //daily run task
-        scheduleDataTask = new TimerTask() {
-            public void run() {
-                Log.i(TAG,"Scheduled data sending task for everyday.");
-               // TEST_TIME= TEST_TIME+3; -- for test runs
-               // END_EVENING_MINUTE=TEST_TIME; -- for test runs
-                startCollectingSendingData();
-           }
-        };
 
         mainCalendar = new GregorianCalendar();
         int current_hour = mainCalendar.get( Calendar.HOUR_OF_DAY );
@@ -81,40 +76,22 @@ public class CollectionService extends Service {
         Log.i(TAG,"START TIME:"+START_MORNING_HOUR+":"+START_MORNING_MINUTE+" END TIME:"+END_EVENING_HOUR+":"+END_EVENING_MINUTE);
         //process to start only between 8 AM and 6 PM
 
-        if((current_hour >= START_MORNING_HOUR && current_minute >= START_MORNING_MINUTE)
-                && (current_hour <= END_EVENING_HOUR && current_minute < END_EVENING_MINUTE)){
+        if((current_hour > START_MORNING_HOUR ||(current_hour == START_MORNING_HOUR && current_minute >= START_MORNING_MINUTE) )
+                && (current_hour < END_EVENING_HOUR || (current_hour == END_EVENING_HOUR && current_minute < END_EVENING_MINUTE) )){
             Log.i(TAG,"start collection now as it is within the time range.");
             collectionStarted = true;
             startCollectingSendingData();
         }else{
             Log.i(TAG,"Not running the task as current time is outside range.");
         }
-        dailyRunTimer= new Timer();
-        scheduleDailyRun();
+        return super.onStartCommand(intent,flags,startId);
     }
 
-    private void scheduleDailyRun(){
+    @Override
+    protected void onHandleIntent(Intent workIntent) {
+        Log.i(TAG,"onHandleIntent msg received.");
+        Toast.makeText(this, "Starting collection ", Toast.LENGTH_SHORT).show();
 
-        Calendar date = new GregorianCalendar();
-        int nowHour= date.get(Calendar.HOUR_OF_DAY);
-        if(nowHour >=START_MORNING_HOUR ){
-            date.add(Calendar.DATE, 1);
-        }
-
-        date.set(Calendar.HOUR_OF_DAY, START_MORNING_HOUR);
-        date.set(Calendar.MINUTE, START_MORNING_MINUTE);
-
-        //date.set(Calendar.HOUR_OF_DAY, 23);-- test runs
-       // date.set(Calendar.MINUTE, TEST_TIME);-- test runs
-
-        date.set(Calendar.SECOND, START_MORNING_SECONDS);
-        date.set(Calendar.MILLISECOND, START_MORNING_MILLIS);
-
-        Log.i(TAG,"scheduleDailyRun - daily run. Start:"+ date.get(Calendar.DATE)+"-"+date.get(Calendar.HOUR_OF_DAY)+":"+date.get(Calendar.MINUTE)+" Every ms:"+SCHEDULEDING_TIME_IN_MS);
-
-        dailyRunTimer.schedule(scheduleDataTask,
-                date.getTime(),SCHEDULEDING_TIME_IN_MS
-        );
     }
 
     private void sendTask(){
@@ -139,7 +116,6 @@ public class CollectionService extends Service {
 
         try {
             scheduleTimer = new Timer();
-            //data send task
             sendDataTask = new SendTask();
             collectionAsyncTask = new CollectionAsyncTask();
             scheduleTimer.schedule(collectionAsyncTask, 0, COLLECTION_TIME_MS);
@@ -153,14 +129,12 @@ public class CollectionService extends Service {
     public void onDestroy() {
         Log.i(TAG,"destroying the timer.");
         try{
-            scheduleTimer.cancel();
-            scheduleTimer.purge();
-            dailyRunTimer.cancel();
-            dailyRunTimer.purge();
+          //  scheduleTimer.cancel();
+         //   scheduleTimer.purge();
+          //  stopSelf();
         }catch(Exception e){
 
         }
-
     }
 
     @Override
@@ -181,7 +155,7 @@ public class CollectionService extends Service {
             int minute =mainCalendar.get( Calendar.MINUTE);
             Log.i(TAG,"current time:"+hour +":"+minute);
             Log.i(TAG,"Stopping time:"+END_EVENING_HOUR+":"+END_EVENING_MINUTE);
-            if(hour>=END_EVENING_HOUR && minute>=END_EVENING_MINUTE){
+            if(hour>END_EVENING_HOUR || (hour==END_EVENING_HOUR && minute>=END_EVENING_MINUTE)){
                 Log.i(TAG, "Time is past the collection time. Should stop collection.");
                 sendDataTask.cancel();
                 sendTask();
@@ -192,6 +166,7 @@ public class CollectionService extends Service {
                 scheduleTimer=null;
                 //collectionAsyncTask= null;
                 sendDataTask=null;
+                stopSelf();
                 Log.i(TAG,"Everything stopped for today.");
             }
         }

@@ -9,5 +9,7 @@
     <string name="close">Close</string>
     <string name="title_activity_main">Collect Data</string>
     <string name="hello_world">Hello world!</string>
+    <string name="collectToastMsg">Starting collecting Data</string>
+    <string name="collectionAlarmSet">Alarm Set</string>
 
 </resources>

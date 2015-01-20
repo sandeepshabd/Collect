@@ -35,6 +35,9 @@
             android:name=".MainActivity"
             android:label="@string/title_activity_main" >
         </activity>
+
+        <receiver android:name="sandeep.com.collect.CollectionAlarmReceiver" >
+        </receiver>
     </application>
 
 </manifest>
