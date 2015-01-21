@@ -91,6 +91,7 @@ public class CollectionService extends IntentService {
     protected void onHandleIntent(Intent workIntent) {
         Log.i(TAG,"onHandleIntent msg received.");
         Toast.makeText(this, "Starting collection ", Toast.LENGTH_SHORT).show();
+        //TODO - destroy scheduled task and timer on stop button click intent.
 
     }
 
@@ -104,7 +105,7 @@ public class CollectionService extends IntentService {
         try{
            // RestClient.get().postCollectionData(result,new BackendResponse());
             JSONArray jsnobject = new JSONArray(result);
-            RestClient.get().postCollectionData(jsnobject);
+           RestClient.get().postCollectionData(jsnobject); //TODO - remove once awake system is working.
         }catch(Exception ex){
            Log.e(TAG,ex.getMessage());
         }

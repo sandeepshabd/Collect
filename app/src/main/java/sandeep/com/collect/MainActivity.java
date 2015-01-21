@@ -89,7 +89,7 @@ public class MainActivity extends Activity {
 
 
     public void scheduleDailyRun() {
-
+        Log.i(TAG,"Register alarm for daily run");
         Intent alarmIntent = new Intent(ctx, CollectionAlarmReceiver.class);
         pendingIntent = PendingIntent.getBroadcast(ctx, 0, alarmIntent, 0);
 
@@ -100,10 +100,10 @@ public class MainActivity extends Activity {
         }
 
         date.set(Calendar.HOUR_OF_DAY, START_MORNING_HOUR);
-       date.set(Calendar.MINUTE, START_MORNING_MINUTE);
+        date.set(Calendar.MINUTE, START_MORNING_MINUTE);
 
-        date.set(Calendar.HOUR_OF_DAY, 20);//-- test runs
-         date.set(Calendar.MINUTE, 33);//-- test runs
+        //date.set(Calendar.HOUR_OF_DAY, 20);//-- test runs
+       //  date.set(Calendar.MINUTE, 33);//-- test runs
 
 
         date.set(Calendar.SECOND, START_MORNING_SECONDS);
@@ -112,6 +112,7 @@ public class MainActivity extends Activity {
         manager = (AlarmManager)getSystemService(Context.ALARM_SERVICE);
 
         manager.setRepeating(AlarmManager.RTC_WAKEUP, date.getTimeInMillis(), SCHEDULEDING_TIME_IN_MS, pendingIntent);
+        Log.i(TAG,"repeating alarm set");
         Toast.makeText(this, getString(R.string.collectionAlarmSet), Toast.LENGTH_SHORT).show();
     }
 
