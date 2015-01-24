@@ -58,7 +58,7 @@ public class MainActivity extends Activity {
             @Override
             public void onClick(View v) {
                 cancelAlarm();
-                stopService(new Intent(getApplicationContext(),CollectionService.class));
+              //  stopService(new Intent(getApplicationContext(),CollectionService.class));
                 finish();
             }
         });

@@ -13,6 +13,7 @@ import android.widget.Toast;
 
 import org.json.JSONArray;
 
+import java.net.SocketException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
@@ -21,7 +22,7 @@ import java.util.GregorianCalendar;
 import java.util.Timer;
 import java.util.TimerTask;
 
-public class CollectionService extends IntentService {
+public class CollectionService extends Service {
 
     private static final String TAG="CollectionService";
 
@@ -55,7 +56,7 @@ public class CollectionService extends IntentService {
 
 
     public CollectionService(){
-        super("CollectionService");
+
     }
 
 
@@ -76,7 +77,7 @@ public class CollectionService extends IntentService {
         Log.i(TAG,"START TIME:"+START_MORNING_HOUR+":"+START_MORNING_MINUTE+" END TIME:"+END_EVENING_HOUR+":"+END_EVENING_MINUTE);
         //process to start only between 8 AM and 6 PM
 
-        if((current_hour > START_MORNING_HOUR ||(current_hour == START_MORNING_HOUR && current_minute >= START_MORNING_MINUTE) )
+        if((current_hour > START_MORNING_HOUR ||(current_hour == START_MORNING_HOUR && current_minute >= (START_MORNING_MINUTE-5)) )
                 && (current_hour < END_EVENING_HOUR || (current_hour == END_EVENING_HOUR && current_minute < END_EVENING_MINUTE) )){
             Log.i(TAG,"start collection now as it is within the time range.");
             collectionStarted = true;
@@ -87,13 +88,13 @@ public class CollectionService extends IntentService {
         return super.onStartCommand(intent,flags,startId);
     }
 
-    @Override
-    protected void onHandleIntent(Intent workIntent) {
-        Log.i(TAG,"onHandleIntent msg received.");
-        Toast.makeText(this, "Starting collection ", Toast.LENGTH_SHORT).show();
-        //TODO - destroy scheduled task and timer on stop button click intent.
-
-    }
+//    @Override
+//    protected void onHandleIntent(Intent workIntent) {
+//        Log.i(TAG,"onHandleIntent msg received.");
+//        Toast.makeText(this, "Starting collection ", Toast.LENGTH_SHORT).show();
+//        //TODO - destroy scheduled task and timer on stop button click intent.
+//
+//    }
 
     private void sendTask(){
         Log.i(TAG,"sendTask function");
@@ -106,8 +107,10 @@ public class CollectionService extends IntentService {
            // RestClient.get().postCollectionData(result,new BackendResponse());
             JSONArray jsnobject = new JSONArray(result);
            RestClient.get().postCollectionData(jsnobject); //TODO - remove once awake system is working.
+        }catch(SocketException ex){
+            Log.e(TAG,"error in sending data.");
         }catch(Exception ex){
-           Log.e(TAG,ex.getMessage());
+           Log.e(TAG,"error in sending data.");
         }
 
     }
@@ -129,6 +132,7 @@ public class CollectionService extends IntentService {
     @Override
     public void onDestroy() {
         Log.i(TAG,"destroying the timer.");
+        Toast.makeText(this, "Service is closing", Toast.LENGTH_SHORT).show();
         try{
           //  scheduleTimer.cancel();
          //   scheduleTimer.purge();
@@ -140,6 +144,7 @@ public class CollectionService extends IntentService {
 
     @Override
     public IBinder onBind(Intent intent) {
+        Log.i(TAG,"Bind service is called.");
         // TODO: Return the communication channel to the service.
         throw new UnsupportedOperationException("Not yet implemented");
     }
@@ -147,28 +152,38 @@ public class CollectionService extends IntentService {
     private class CollectionAsyncTask extends TimerTask{
         public void run() {
             Log.i(TAG,"doAsynchronousTask to collect the data.");
-            collectionTask.execute();
-            resultMaker.append("{");
-            resultMaker.append(DataClass.singleRunResult);
-            resultMaker.append("},");
-            mainCalendar = new GregorianCalendar();
-            int hour = mainCalendar.get( Calendar.HOUR_OF_DAY );
-            int minute =mainCalendar.get( Calendar.MINUTE);
-            Log.i(TAG,"current time:"+hour +":"+minute);
-            Log.i(TAG,"Stopping time:"+END_EVENING_HOUR+":"+END_EVENING_MINUTE);
-            if(hour>END_EVENING_HOUR || (hour==END_EVENING_HOUR && minute>=END_EVENING_MINUTE)){
-                Log.i(TAG, "Time is past the collection time. Should stop collection.");
-                sendDataTask.cancel();
-                sendTask();
-                this.cancel();
-                scheduleTimer.cancel();
-                scheduleTimer.purge();
+            try {
+                collectionTask.execute();
+                resultMaker.append("{");
+                resultMaker.append(DataClass.singleRunResult);
+                resultMaker.append("},");
+                mainCalendar = new GregorianCalendar();
 
-                scheduleTimer=null;
-                //collectionAsyncTask= null;
-                sendDataTask=null;
-                stopSelf();
-                Log.i(TAG,"Everything stopped for today.");
+            }catch(Exception e){
+                Log.e(TAG,"error in starting the collection wake lock.");
+            }
+            int hour = mainCalendar.get(Calendar.HOUR_OF_DAY);
+            int minute = mainCalendar.get(Calendar.MINUTE);
+            Log.i(TAG, "current time:" + hour + ":" + minute);
+            Log.i(TAG, "Stopping time:" + END_EVENING_HOUR + ":" + END_EVENING_MINUTE);
+            if(hour>END_EVENING_HOUR || (hour==END_EVENING_HOUR && minute>=END_EVENING_MINUTE)){
+                try {
+                    Log.i(TAG, "Time is past the collection time. Should stop collection.");
+                    sendDataTask.cancel();
+                    sendTask();
+                    this.cancel();
+                    scheduleTimer.cancel();
+                    scheduleTimer.purge();
+
+                    scheduleTimer = null;
+                    //collectionAsyncTask= null;
+                    sendDataTask = null;
+                    stopSelf();
+                    CollectionAlarmReceiver.release();
+                    Log.i(TAG, "Everything stopped for today.");
+                }catch(Exception e){
+                    Log.e(TAG,"error in closing the collection");
+                }
             }
         }
     }

@@ -42,15 +42,20 @@ public class LoginActivity extends Activity {
         confirmButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Intent intent = new Intent(context, MainActivity.class);
-                UserProfile.emailAddress=emailAddr.getText().toString();
-                UserProfile.phoneNumber= phoneNumber.getText().toString();
-                if(android.util.Patterns.EMAIL_ADDRESS.matcher(UserProfile.emailAddress).matches())
-                if(Patterns.EMAIL_ADDRESS.matcher(UserProfile.emailAddress).matches()
-                        && Patterns.PHONE.matcher(UserProfile.phoneNumber).matches()){
-                    startActivity(intent);
-                }else{
-                    Toast.makeText(null, "Please use a valid email and phone.", Toast.LENGTH_SHORT).show();
+
+                try {
+                    Intent intent = new Intent(context, MainActivity.class);
+                    UserProfile.emailAddress = emailAddr.getText().toString();
+                    UserProfile.phoneNumber = phoneNumber.getText().toString();
+                    if (android.util.Patterns.EMAIL_ADDRESS.matcher(UserProfile.emailAddress).matches())
+                        if (Patterns.EMAIL_ADDRESS.matcher(UserProfile.emailAddress).matches()
+                                && Patterns.PHONE.matcher(UserProfile.phoneNumber).matches()) {
+                            startActivity(intent);
+                        } else {
+                            Toast.makeText(null, "Please use a valid email and phone.", Toast.LENGTH_SHORT).show();
+                        }
+                }catch(Exception e){
+                    Log.e(TAG,"Error in getting login details");
                 }
             }
         });

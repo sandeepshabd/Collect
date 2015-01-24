@@ -11,5 +11,7 @@
     <string name="hello_world">Hello world!</string>
     <string name="collectToastMsg">Starting collecting Data</string>
     <string name="collectionAlarmSet">Alarm Set</string>
+    <string name="CrashReport_MailSubject">App Crashed-Collect</string>
+    <string name="CrashReport_MailBody">Collec crashed:</string>
 
 </resources>

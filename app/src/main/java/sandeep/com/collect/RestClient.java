@@ -1,5 +1,7 @@
 package sandeep.com.collect;
 
+import android.util.Log;
+
 import com.squareup.okhttp.OkHttpClient;
 
 import java.util.concurrent.TimeUnit;
@@ -29,23 +31,28 @@ public class RestClient {
 
     private static void setupRestClient() {
 
-        OkHttpClient httpClient = new OkHttpClient();
-        HttpErrorHandler httpErrorHandler = new HttpErrorHandler();
+        try {
 
-        httpClient.setConnectTimeout(timeoutSeconds, TimeUnit.SECONDS);
-        httpClient.setReadTimeout(timeoutSeconds, TimeUnit.SECONDS);
-        httpClient.setWriteTimeout(timeoutSeconds, TimeUnit.SECONDS);
+            OkHttpClient httpClient = new OkHttpClient();
+            HttpErrorHandler httpErrorHandler = new HttpErrorHandler();
 
-        OkClient okClient =  new OkClient(httpClient);
+            httpClient.setConnectTimeout(timeoutSeconds, TimeUnit.SECONDS);
+            httpClient.setReadTimeout(timeoutSeconds, TimeUnit.SECONDS);
+            httpClient.setWriteTimeout(timeoutSeconds, TimeUnit.SECONDS);
+
+            OkClient okClient = new OkClient(httpClient);
 
 
-        RestAdapter restAdapter = new RestAdapter.Builder()
-                .setEndpoint(ROOT)
-                .setClient(okClient)
-                .setErrorHandler(httpErrorHandler)
-                .setLogLevel(RestAdapter.LogLevel.FULL).setLog(new AndroidLog("FLUME_CALL_LOG"))
-                .build();
+            RestAdapter restAdapter = new RestAdapter.Builder()
+                    .setEndpoint(ROOT)
+                    .setClient(okClient)
+                    .setErrorHandler(httpErrorHandler)
+                    .setLogLevel(RestAdapter.LogLevel.FULL).setLog(new AndroidLog("FLUME_CALL_LOG"))
+                    .build();
 
-        REST_CLIENT = restAdapter.create(IApi.class);
+            REST_CLIENT = restAdapter.create(IApi.class);
+        }catch(Exception e){
+            Log.i("RestClient","Error in rest client");
+        }
     }
 }
