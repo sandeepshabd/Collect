@@ -6,6 +6,8 @@ import android.content.Context;
 import android.content.Intent;
 import android.hardware.Sensor;
 import android.hardware.SensorManager;
+import android.location.Criteria;
+import android.location.LocationManager;
 import android.os.IBinder;
 import android.util.Log;
 import android.widget.Toast;
@@ -59,6 +61,17 @@ public class CollectionService extends Service {
 
     }
 
+    String getProviderName(LocationManager locationManager) {
+
+        Criteria criteria = new Criteria();
+        criteria.setPowerRequirement(Criteria.POWER_LOW); // Chose your desired power consumption level.
+        criteria.setAccuracy(Criteria.ACCURACY_FINE); // Choose your accuracy requirement.
+        criteria.setSpeedRequired(true); // Chose if speed for first location fix is required.
+        criteria.setAltitudeRequired(true); // Choose if you use altitude.
+        criteria.setBearingRequired(true); // Choose if you use bearing.
+
+        return locationManager.getBestProvider(criteria, true);
+    }
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
@@ -69,6 +82,10 @@ public class CollectionService extends Service {
         SensorData sensorListener = new SensorData();
         mSensorManager.registerListener(sensorListener, accelerometer, SensorManager.SENSOR_DELAY_UI);
         mSensorManager.registerListener(sensorListener, magnetometer, SensorManager.SENSOR_DELAY_UI);
+        LocationManager locationManager = (LocationManager) this
+                .getSystemService(Context.LOCATION_SERVICE);
+        locationManager.requestLocationUpdates(getProviderName(locationManager), 0,
+                0, new CollectLocationListner(context));
 
         mainCalendar = new GregorianCalendar();
         int current_hour = mainCalendar.get( Calendar.HOUR_OF_DAY );
@@ -97,12 +114,12 @@ public class CollectionService extends Service {
 //    }
 
     private void sendTask(){
-        Log.i(TAG,"sendTask function");
+        //Log.i(TAG,"sendTask function");
         String result = "["+resultMaker.toString()+
                         "{"+DataClass.singleRunResult+"}]";
         DataClass.singleRunResult="";
         resultMaker=  new StringBuilder();
-        Log.i(TAG,"result:"+result);
+        Log.i(TAG,result);
         try{
            // RestClient.get().postCollectionData(result,new BackendResponse());
             JSONArray jsnobject = new JSONArray(result);
@@ -151,7 +168,7 @@ public class CollectionService extends Service {
 
     private class CollectionAsyncTask extends TimerTask{
         public void run() {
-            Log.i(TAG,"doAsynchronousTask to collect the data.");
+           // Log.i(TAG,"doAsynchronousTask to collect the data.");
             try {
                 collectionTask.execute();
                 resultMaker.append("{");
@@ -164,11 +181,12 @@ public class CollectionService extends Service {
             }
             int hour = mainCalendar.get(Calendar.HOUR_OF_DAY);
             int minute = mainCalendar.get(Calendar.MINUTE);
-            Log.i(TAG, "current time:" + hour + ":" + minute);
-            Log.i(TAG, "Stopping time:" + END_EVENING_HOUR + ":" + END_EVENING_MINUTE);
+           // Log.i(TAG, "current time:" + hour + ":" + minute);
+            //Log.i(TAG, "Stopping time:" + END_EVENING_HOUR + ":" + END_EVENING_MINUTE);
             if(hour>END_EVENING_HOUR || (hour==END_EVENING_HOUR && minute>=END_EVENING_MINUTE)){
                 try {
                     Log.i(TAG, "Time is past the collection time. Should stop collection.");
+
                     sendDataTask.cancel();
                     sendTask();
                     this.cancel();
@@ -190,7 +208,7 @@ public class CollectionService extends Service {
 
     private class SendTask extends TimerTask{
         public void run() {
-            Log.i(TAG,"Scheduled send task");
+           // Log.i(TAG,"Scheduled send task");
             sendTask();
         }
     }
@@ -201,9 +219,9 @@ public class CollectionService extends Service {
         //get current date time with Date()
 
          protected void execute(){
-             Log.i(TAG,"start execute collection service");
+             //Log.i(TAG,"start execute collection service");
              Date time = new Date();
-             GPSGatherData.getLocationData(context);
+             GPSGatherData.getLocationData();
              StringBuilder collectBuilder = new StringBuilder();
              DataClass.singleRunResult=collectBuilder
              .append("\"deviceId\":\"")

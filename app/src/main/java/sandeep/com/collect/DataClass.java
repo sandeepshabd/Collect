@@ -9,5 +9,10 @@ public class DataClass {
     public static String accelerometerData="\"accelerometer_x\":0.0, \"accelerometer_y\":0.0, \"accelerometer_z\":0.0";
     public static String orientationData="\"orientation_azimut\":0.0,\"orientation_pitch\":0.0,\"orientation_roll\":0.0";
     public static String singleRunResult="[]";
+    public static float speed=0;
+    public static double latitude=0;
+    public static double longitude=0;
+    public static double altitude=0;
+    public static float bearing=0;
 
 }

@@ -6,8 +6,8 @@ package sandeep.com.collect;
 public class CollectionConstant {
 
 
-    public final static long COLLECTION_TIME_MS = 10000; // 10 seconds
-    public final static long SEND_TIME_MS = 60000; // 1 minute
+    public final static long COLLECTION_TIME_MS = 4000; // 4 seconds
+    public final static long SEND_TIME_MS = 120000; // 2 minute
 
     public final static int START_MORNING_HOUR= 8; //8 AM
     public final static int START_MORNING_MINUTE= 00; //8 AM
