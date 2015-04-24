@@ -14,6 +14,24 @@
         android:layout_alignParentEnd="true"
         android:layout_centerInParent="true" />
 
+    <TextView
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:id="@+id/phoneNumber"
+        android:textAlignment="center"
+        android:layout_alignParentEnd="true"
+        android:layout_below="@+id/textView"
+        android:layout_centerInParent="true" />
+
+    <TextView
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:id="@+id/emailString"
+        android:textAlignment="center"
+        android:layout_alignParentEnd="true"
+        android:layout_below="@+id/phoneNumber"
+        android:layout_centerInParent="true" />
+
     <Button
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
@@ -21,7 +39,7 @@
         android:id="@+id/main_stop_button"
         android:gravity="center"
 
-        android:layout_below="@+id/textView" />
+        android:layout_below="@+id/emailString" />
 
 
     <Button

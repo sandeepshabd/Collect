@@ -5,6 +5,7 @@ import android.app.AlarmManager;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.Menu;
@@ -12,6 +13,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 import android.widget.RelativeLayout;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import java.util.Calendar;
@@ -24,6 +26,8 @@ public class MainActivity extends Activity {
     private PendingIntent pendingIntent;
     private AlarmManager manager;
     private Context ctx;
+    TextView phone;
+    TextView email;
 
 
    int START_MORNING_HOUR= CollectionConstant.START_MORNING_HOUR; //8 AM
@@ -35,13 +39,18 @@ public class MainActivity extends Activity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        Log.i(TAG,"onCreate");
+        Log.i(TAG, "onCreate");
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         Log.i(TAG,"start service");
         ctx = this;
 
         RelativeLayout mainLayout = (RelativeLayout)findViewById(R.id.mainLayout);
+        phone =(TextView)mainLayout.findViewById(R.id.phoneNumber);
+        email =(TextView)mainLayout.findViewById(R.id.emailString);
+
+        pullPrivateRecord();
+
         Button stopButton = (Button)mainLayout.findViewById(R.id.main_stop_button);
         Button closeButton = (Button)mainLayout.findViewById(R.id.close_button);
         startService(new Intent(getApplicationContext(),CollectionService.class));
@@ -62,6 +71,20 @@ public class MainActivity extends Activity {
                 finish();
             }
         });
+    }
+
+    private void pullPrivateRecord(){
+        SharedPreferences preferences = getSharedPreferences(CollectionConstant.ProfileFile, MODE_PRIVATE);
+        phone.setText(preferences.getString("phone","0000000000"));
+        email.setText(preferences.getString("email","dummy@lochbridge.com"));
+
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        pullPrivateRecord();
+
     }
 
 
