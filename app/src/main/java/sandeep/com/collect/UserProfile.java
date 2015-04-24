@@ -5,6 +5,6 @@ package sandeep.com.collect;
  */
 public class UserProfile {
 
-    public static String phoneNumber;
-    public static String emailAddress;
+    public static  String phoneNumber;
+    public static  String emailAddress;
 }

@@ -16,8 +16,8 @@ import retrofit.client.OkClient;
 public class RestClient {
 
     private static IApi REST_CLIENT;
-    private final static String ROOT =   "http://ec2-54-68-110-101.us-west-2.compute.amazonaws.com:32123";
-    private final static long timeoutSeconds = 10;
+    private final static String ROOT =  CollectionConstant.URL;
+    private final static long timeoutSeconds =9;
 
     static {
         setupRestClient();

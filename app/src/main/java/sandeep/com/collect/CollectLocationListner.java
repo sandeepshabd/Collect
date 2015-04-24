@@ -41,11 +41,17 @@ public class CollectLocationListner implements LocationListener {
     }
 
     private void doWorkWithNewLocation(Location location){
-        DataClass.speed = location.getSpeed();
+        DataClass.speed = location.getSpeed()*2.23694;
         DataClass.latitude=location.getLatitude();
-        DataClass.longitude=location.getLatitude();
+        DataClass.longitude=location.getLongitude();
         DataClass.altitude=location.getAltitude();
         DataClass.bearing =location.getBearing();
+
+//        CharSequence text =  DataClass.speed+ "";
+//        int duration = Toast.LENGTH_SHORT;
+//
+//        Toast toast = Toast.makeText(ctx, text, duration);
+//        toast.show();
     }
 
 }

@@ -5,6 +5,7 @@ import android.accounts.AccountManager;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.telephony.TelephonyManager;
 import android.util.Log;
@@ -44,18 +45,20 @@ public class LoginActivity extends Activity {
             public void onClick(View v) {
 
                 try {
+                    Log.i(TAG,"data confirmed.");
                     Intent intent = new Intent(context, MainActivity.class);
                     UserProfile.emailAddress = emailAddr.getText().toString();
                     UserProfile.phoneNumber = phoneNumber.getText().toString();
-                    if (android.util.Patterns.EMAIL_ADDRESS.matcher(UserProfile.emailAddress).matches())
                         if (Patterns.EMAIL_ADDRESS.matcher(UserProfile.emailAddress).matches()
                                 && Patterns.PHONE.matcher(UserProfile.phoneNumber).matches()) {
+                            Toast.makeText(context, "Things looks good starting service.", Toast.LENGTH_SHORT).show();
+                            createpref();
                             startActivity(intent);
                         } else {
-                            Toast.makeText(null, "Please use a valid email and phone.", Toast.LENGTH_SHORT).show();
+                            Toast.makeText(context, "Please use a valid email and phone.", Toast.LENGTH_SHORT).show();
                         }
                 }catch(Exception e){
-                    Log.e(TAG,"Error in getting login details");
+                    Log.e(TAG,"Error in getting login details",e);
                 }
             }
         });
@@ -111,5 +114,15 @@ public class LoginActivity extends Activity {
         }
 
         return email;
+    }
+
+    private void createpref(){
+
+        SharedPreferences preferences = getSharedPreferences(CollectionConstant.ProfileFile, MODE_PRIVATE);
+        SharedPreferences.Editor editor = preferences.edit();
+        editor.putString("phone", UserProfile.phoneNumber); // value to store
+        editor.putString("email", UserProfile.emailAddress);
+        editor.commit();
+        Log.i(TAG,"strored:"+UserProfile.emailAddress+":"+UserProfile.phoneNumber);
     }
 }

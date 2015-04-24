@@ -4,6 +4,7 @@ import android.app.IntentService;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.hardware.Sensor;
 import android.hardware.SensorManager;
 import android.location.Criteria;
@@ -29,6 +30,8 @@ public class CollectionService extends Service {
     private static final String TAG="CollectionService";
 
     boolean collectionStarted = false;
+    int speedZeroCounter = 0;
+    int totalNumberOfReads = 0;
 
     long COLLECTION_TIME_MS = CollectionConstant.COLLECTION_TIME_MS; // 10 seconds
     long SEND_TIME_MS = CollectionConstant.SEND_TIME_MS; // 1 minute
@@ -115,20 +118,35 @@ public class CollectionService extends Service {
 
     private void sendTask(){
         //Log.i(TAG,"sendTask function");
-        String result = "["+resultMaker.toString()+
-                        "{"+DataClass.singleRunResult+"}]";
-        DataClass.singleRunResult="";
-        resultMaker=  new StringBuilder();
-        Log.i(TAG,result);
-        try{
-           // RestClient.get().postCollectionData(result,new BackendResponse());
-            JSONArray jsnobject = new JSONArray(result);
-           RestClient.get().postCollectionData(jsnobject); //TODO - remove once awake system is working.
-        }catch(SocketException ex){
-            Log.e(TAG,"error in sending data.");
-        }catch(Exception ex){
-           Log.e(TAG,"error in sending data.");
-        }
+           String finalData = resultMaker.toString();
+            if(speedZeroCounter==totalNumberOfReads || finalData.length() ==0){
+                speedZeroCounter=0;
+                totalNumberOfReads=0;
+                Log.i(TAG,"speed zero for most of the data.Not sending data.");
+            }else{
+                speedZeroCounter=0;
+                totalNumberOfReads=0;
+
+                String result = "";
+                if(DataClass.singleRunResult.equals("")){
+                    result = "["+finalData.substring(0,finalData.length()-1)+"]";
+                }else{
+                    result = "["+finalData+"{"+DataClass.singleRunResult+"}]";
+                }
+
+                DataClass.singleRunResult="";
+                resultMaker=  new StringBuilder();
+                Log.i(TAG, result);
+                try{
+                    // RestClient.get().postCollectionData(result,new BackendResponse());
+                    JSONArray jsnobject = new JSONArray(result);
+                    RestClient.get().postCollectionData(jsnobject); //TODO - remove once awake system is working.
+                }catch(SocketException ex){
+                    Log.e(TAG,"error in sending data.");
+                }catch(Exception ex){
+                    Log.e(TAG,"error in sending data.");
+                }
+            }
 
     }
 
@@ -139,6 +157,8 @@ public class CollectionService extends Service {
             scheduleTimer = new Timer();
             sendDataTask = new SendTask();
             collectionAsyncTask = new CollectionAsyncTask();
+            speedZeroCounter = 0;
+            totalNumberOfReads = 0;
             scheduleTimer.schedule(collectionAsyncTask, 0, COLLECTION_TIME_MS);
             scheduleTimer.schedule(sendDataTask, 0, SEND_TIME_MS);
         }catch(Exception e){
@@ -171,9 +191,11 @@ public class CollectionService extends Service {
            // Log.i(TAG,"doAsynchronousTask to collect the data.");
             try {
                 collectionTask.execute();
-                resultMaker.append("{");
-                resultMaker.append(DataClass.singleRunResult);
-                resultMaker.append("},");
+                if(!DataClass.singleRunResult.equals("")) {
+                    resultMaker.append("{");
+                    resultMaker.append(DataClass.singleRunResult);
+                    resultMaker.append("},");
+                }
                 mainCalendar = new GregorianCalendar();
 
             }catch(Exception e){
@@ -209,13 +231,23 @@ public class CollectionService extends Service {
     private class SendTask extends TimerTask{
         public void run() {
            // Log.i(TAG,"Scheduled send task");
+//            if(speedZeroCounter==totalNumberOfReads){
+//                speedZeroCounter=0;
+//                totalNumberOfReads=0;
+//                Log.i(TAG,"speed zero for most of the data.Not sending data.");
+//            }else{
+//                speedZeroCounter=0;
+//                totalNumberOfReads=0;
+//                sendTask();
+//            }
             sendTask();
+
         }
     }
 
     private class CollectionTask {
 
-        DateFormat timeFormat = new SimpleDateFormat("yyyyy-mm-dd HH:mm:ss:SSSZ");
+        DateFormat timeFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss:SSSZ");
         //get current date time with Date()
 
          protected void execute(){
@@ -223,23 +255,38 @@ public class CollectionService extends Service {
              Date time = new Date();
              GPSGatherData.getLocationData();
              StringBuilder collectBuilder = new StringBuilder();
-             DataClass.singleRunResult=collectBuilder
-             .append("\"deviceId\":\"")
-             .append(UserProfile.phoneNumber)
-             .append("\",")
-             .append(" \"emailId\":\"")
-             .append(UserProfile.emailAddress)
-             .append("\",")
-             .append(" \"time\":")
-             .append("\"")
-             .append(timeFormat.format(time))
-             .append("\"")
-             .append(",")
-             .append(DataClass.gps)
-             .append(",")
-             .append(DataClass.accelerometerData)
-             .append(",")
-             .append(DataClass.orientationData).toString();
+             totalNumberOfReads++;
+             if(DataClass.speed>=CollectionConstant.MIN_COLLECTION_SPEED){
+
+                 if(UserProfile.phoneNumber==null || UserProfile.emailAddress==null){
+                     SharedPreferences preferences = getSharedPreferences(CollectionConstant.ProfileFile, MODE_PRIVATE);
+                     UserProfile.phoneNumber=preferences.getString("phone","0000000000");
+                     UserProfile.emailAddress=preferences.getString("email","dummy@lochbridge.com");
+
+                 }
+                 DataClass.singleRunResult=collectBuilder
+                         .append("\"deviceId\":\"")
+                         .append(UserProfile.phoneNumber)
+                         .append("\",")
+                         .append(" \"emailId\":\"")
+                         .append(UserProfile.emailAddress)
+                         .append("\",")
+                         .append(" \"time\":")
+                         .append("\"")
+                         .append(timeFormat.format(time))
+                         .append("\"")
+                         .append(",")
+                         .append(DataClass.gps)
+                         .append(",")
+                         .append(DataClass.accelerometerData)
+                         .append(",")
+                         .append(DataClass.orientationData).toString();
+
+             }else
+             {
+                 speedZeroCounter++;
+                 DataClass.singleRunResult="";
+             }
          }
     }
 
